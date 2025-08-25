@@ -11,7 +11,7 @@ class MLflowLogger(object):
 
 
     def log(self, key, value, epoch: int):
-        self.nnunet_logger(key, value, epoch)
+        self.nnunet_logger.log(key, value, epoch)
         self.check_mlflow_run()
         try: 
             mlflow.log_metric(key, value, step=epoch)
@@ -33,7 +33,7 @@ class MLflowLogger(object):
 
 
     def plot_progress_png(self, output_folder):
-        self.nnunet_logger(output_folder)
+        self.nnunet_logger.plot_progress_png(output_folder)
 
 
     def get_checkpoint(self):
@@ -41,4 +41,4 @@ class MLflowLogger(object):
 
 
     def load_checkpoint(self, checkpoint: dict):
-        self.nnunet_logger.load_checkpoint(self, checkpoint)
+        self.nnunet_logger.load_checkpoint(checkpoint)
