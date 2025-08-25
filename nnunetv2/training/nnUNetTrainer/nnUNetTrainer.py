@@ -11,6 +11,7 @@ from typing import Tuple, Union, List
 
 import numpy as np
 import torch
+import mlflow
 from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
 from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
 from batchgenerators.dataloading.single_threaded_augmenter import SingleThreadedAugmenter
@@ -57,7 +58,12 @@ from nnunetv2.paths import nnUNet_preprocessed, nnUNet_results
 from nnunetv2.training.data_augmentation.compute_initial_patch_size import get_patch_size
 from nnunetv2.training.dataloading.nnunet_dataset import infer_dataset_class
 from nnunetv2.training.dataloading.data_loader import nnUNetDataLoader
+<<<<<<< HEAD
 from nnunetv2.training.logging.nnunet_logger import MetaLogger
+=======
+from nnunetv2.training.logging.nnunet_logger import nnUNetLogger
+from nnunetv2.training.logging.mlflow_logger import MLflowLogger
+>>>>>>> db0c888 (Add MLflow logger to nnUNetTrainer)
 from nnunetv2.training.loss.compound_losses import DC_and_CE_loss, DC_and_BCE_loss
 from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
 from nnunetv2.training.loss.dice import get_tp_fp_fn_tn, MemoryEfficientSoftDiceLoss
@@ -1214,6 +1220,8 @@ class nnUNetTrainer(object):
                     'inference_allowed_mirroring_axes': self.inference_allowed_mirroring_axes,
                 }
                 torch.save(checkpoint, filename)
+                if isinstance(self.logger, MLflowLogger):
+                    self.logger.log_artifact(filename, "checkpoint")
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
 
@@ -1414,7 +1422,26 @@ class nnUNetTrainer(object):
         self.set_deep_supervision_enabled(True)
         compute_gaussian.cache_clear()
 
+
     def run_training(self):
+        mlflow_tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+        mlflow_experiment_name = os.environ.get('MLFLOW_EXPERIMENT_NAME')
+        if mlflow_tracking_uri and mlflow_experiment_name:
+            self.print_to_log_file("MLflow environment detected, using MLflowLogger")
+            # Wrap existing logger in MLflowLogger
+            self.logger = MLflowLogger(
+                self.logger,
+                mlflow_tracking_uri,
+                mlflow_experiment_name,
+                )
+            with mlflow.start_run():
+                self.run_training_core()
+        else:
+            # Run without MLflow
+            self.run_training_core()
+
+
+    def run_training_core(self):
         self.on_train_start()
 
         for epoch in range(self.current_epoch, self.num_epochs):
