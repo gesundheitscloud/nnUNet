@@ -173,7 +173,19 @@ class nnUNetTrainer(object):
         self.log_file = join(self.output_folder, "training_log_%d_%d_%d_%02.0d_%02.0d_%02.0d.txt" %
                              (timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute,
                               timestamp.second))
-        self.logger = nnUNetLogger()
+        
+
+        ### Initializing logger depending on MLFLOW environment variables
+        mlflow_tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+        mlflow_experiment_name = os.environ.get('MLFLOW_EXPERIMENT_NAME')
+        if mlflow_tracking_uri and mlflow_experiment_name:
+            self.print_to_log_file("MLflow environment detected, using MLflow logging")
+            self.logger = MLflowLogger(mlflow_tracking_uri, mlflow_experiment_name)
+            self.use_mlflow = True
+        else:
+            self.print_to_log_file("MLflow environment not detected, using default logging")
+            self.logger = nnUNetLogger()
+            self.use_mlflow = False
 
         ### placeholders
         self.dataloader_train = self.dataloader_val = None  # see on_train_start
@@ -1170,7 +1182,7 @@ class nnUNetTrainer(object):
                     'inference_allowed_mirroring_axes': self.inference_allowed_mirroring_axes,
                 }
                 torch.save(checkpoint, filename)
-                if isinstance(self.logger, MLflowLogger):
+                if self.use_mlflow:
                     self.logger.log_artifact(filename, "checkpoint")
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
@@ -1365,21 +1377,10 @@ class nnUNetTrainer(object):
 
 
     def run_training(self):
-        mlflow_tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
-        mlflow_experiment_name = os.environ.get('MLFLOW_EXPERIMENT_NAME')
-        if mlflow_tracking_uri and mlflow_experiment_name:
-            self.print_to_log_file("MLflow environment detected, using MLflowLogger")
-            # Wrap existing logger in MLflowLogger
-            self.logger = MLflowLogger(
-                self.logger,
-                mlflow_tracking_uri,
-                mlflow_experiment_name,
-                )
+        if self.use_mlflow:
             with mlflow.start_run():
                 self.run_training_core()
         else:
-            self.print_to_log_file("MLflow environment not detected, using default logging")
-            # Run without MLflow
             self.run_training_core()
 
 
