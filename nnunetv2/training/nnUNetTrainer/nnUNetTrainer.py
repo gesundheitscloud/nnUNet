@@ -1002,8 +1002,13 @@ class nnUNetTrainer(object):
         # dirty hack because on_epoch_end increments the epoch counter and this is executed afterwards.
         # This will lead to the wrong current epoch to be stored
         self.current_epoch -= 1
-        self.save_checkpoint(join(self.output_folder, "checkpoint_final.pth"))
+        self.save_checkpoint(join(self.output_folder, "checkpoint_final.pth"), save_remote=True)
         self.current_epoch += 1
+
+        # log best checkpoint to MLflow
+        best_checkpoint_file = self.get_best_checkpoint_file_path()
+        if self.use_mlflow and os.path.isfile(best_checkpoint_file):
+            self.logger.log_artifact(best_checkpoint_file, artifact_path="checkpoint")
 
         # now we can delete latest
         if self.local_rank == 0 and isfile(join(self.output_folder, "checkpoint_latest.pth")):
@@ -1197,20 +1202,20 @@ class nnUNetTrainer(object):
         # handling periodic checkpointing
         current_epoch = self.current_epoch
         if (current_epoch + 1) % self.save_every == 0 and current_epoch != (self.num_epochs - 1):
-            self.save_checkpoint(join(self.output_folder, 'checkpoint_latest.pth'))
+            self.save_checkpoint(join(self.output_folder, 'checkpoint_latest.pth'), save_remote=False)
 
         # handle 'best' checkpointing. ema_fg_dice is computed by the logger and can be accessed like this
         if self._best_ema is None or self.logger.get_value('ema_fg_dice', step=-1) > self._best_ema:
             self._best_ema = self.logger.get_value('ema_fg_dice', step=-1)
             self.print_to_log_file(f"Yayy! New best EMA pseudo Dice: {np.round(self._best_ema, decimals=4)}")
-            self.save_checkpoint(join(self.output_folder, 'checkpoint_best.pth'))
+            self.save_checkpoint(self.get_best_checkpoint_file_path(), save_remote=False)
 
         if self.local_rank == 0:
             self.logger.plot_progress_png(self.output_folder)
 
         self.current_epoch += 1
 
-    def save_checkpoint(self, filename: str) -> None:
+    def save_checkpoint(self, filename: str, save_remote=False) -> None:
         if self.local_rank == 0:
             if not self.disable_checkpointing:
                 if self.is_ddp:
@@ -1232,7 +1237,7 @@ class nnUNetTrainer(object):
                     'inference_allowed_mirroring_axes': self.inference_allowed_mirroring_axes,
                 }
                 torch.save(checkpoint, filename)
-                if self.use_mlflow:
+                if self.use_mlflow and save_remote:
                     self.logger.log_artifact(filename, "checkpoint")
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
@@ -1465,3 +1470,6 @@ class nnUNetTrainer(object):
             self.on_epoch_end()
 
         self.on_train_end()
+
+    def get_best_checkpoint_file_path(self) -> str:
+        return join(self.output_folder, 'checkpoint_best.pth')
