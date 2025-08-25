@@ -193,6 +193,7 @@ class nnUNetTrainer(object):
         if mlflow_tracking_uri and mlflow_experiment_name:
             self.print_to_log_file("MLflow environment detected, using MLflow logging")
             self.logger = MLflowLogger(mlflow_tracking_uri, mlflow_experiment_name)
+            self.logger.log_params(self.get_hyperparams())
             self.use_mlflow = True
         else:
             self.print_to_log_file("MLflow environment not detected, using default logging")
@@ -1471,5 +1472,19 @@ class nnUNetTrainer(object):
 
         self.on_train_end()
 
+
     def get_best_checkpoint_file_path(self) -> str:
         return join(self.output_folder, 'checkpoint_best.pth')
+    
+
+    def get_hyperparams(self) -> dict:
+        return {
+                "initial_lr": self.initial_lr,
+                "weight_decay": self.weight_decay,
+                "oversample_foreground_percent": self.oversample_foreground_percent,
+                "probabilistic_oversampling": self.probabilistic_oversampling,
+                "num_iterations_per_epoch": self.num_iterations_per_epoch,
+                "num_val_iterations_per_epoch": self.num_val_iterations_per_epoch,
+                "num_epochs": self.num_epochs,
+                "enable_deep_supervision": self.enable_deep_supervision
+        }
