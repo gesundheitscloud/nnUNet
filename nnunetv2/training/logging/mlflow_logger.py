@@ -3,7 +3,7 @@ import os
 import mlflow
 
 class MLflowLogger(nnUNetLogger):
-    
+
     def __init__(self, tracking_uri, experiment_name, verbose: bool = False):
         mlflow.set_tracking_uri(uri=tracking_uri)
         mlflow.set_experiment(experiment_name)
@@ -14,12 +14,11 @@ class MLflowLogger(nnUNetLogger):
         super().log(key, value, epoch)
         self.check_mlflow_run()
         try: 
-            if isinstance(value, (int, float)):
-                mlflow.log_metric(key, float(value), step=epoch)
-            elif isinstance(value, list):
+            if isinstance(value, list):
                 for i, v in enumerate(value):
-                        v = float(v)
                         mlflow.log_metric(f"{key}_{i}", v, step=epoch)
+            else:
+                mlflow.log_metric(key, float(value), step=epoch)
         except Exception as e:
             print(f"MLflowLogger: Failed to log metric {key} with value {value} at epoch {epoch}: {e}")        
 
