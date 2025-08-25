@@ -1437,6 +1437,7 @@ class nnUNetTrainer(object):
             with mlflow.start_run():
                 self.run_training_core()
         else:
+            self.print_to_log_file("MLflow environment not detected, using default logging")
             # Run without MLflow
             self.run_training_core()
 
