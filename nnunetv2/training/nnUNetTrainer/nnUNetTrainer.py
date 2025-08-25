@@ -193,7 +193,6 @@ class nnUNetTrainer(object):
         if mlflow_tracking_uri and mlflow_experiment_name:
             self.print_to_log_file("MLflow environment detected, using MLflow logging")
             self.logger = MLflowLogger(mlflow_tracking_uri, mlflow_experiment_name)
-            self.logger.log_params(self.get_hyperparams())
             self.use_mlflow = True
         else:
             self.print_to_log_file("MLflow environment not detected, using default logging")
@@ -1444,6 +1443,7 @@ class nnUNetTrainer(object):
     def run_training(self):
         if self.use_mlflow:
             with mlflow.start_run():
+                self.logger.log_params(self.get_hyperparams())
                 self.run_training_core()
         else:
             self.run_training_core()
