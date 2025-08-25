@@ -28,7 +28,15 @@ class MLflowLogger(nnUNetLogger):
         try:
             mlflow.log_artifact(filename, artifact_path=artifact_path)
         except Exception as e:
-            print(f"MLflowFogger: Failed to log artifact {filename} to MLflow: {e}")
+            print(f"MLflowFogger: Failed to log {filename} to MLflow in artifact path {artifact_path}: {e}")
+
+
+    def log_params(self, params):
+        self.check_mlflow_run()
+        try: 
+            mlflow.log_params(params)
+        except Exception as e:
+            print(f"MLflowLogger: Failed to log parameters to MLflow: {e}")
 
 
     def check_mlflow_run(self):
