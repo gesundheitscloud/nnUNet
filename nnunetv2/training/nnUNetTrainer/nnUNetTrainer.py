@@ -70,6 +70,7 @@ from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 
 
 class nnUNetTrainer(object):
+    
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict,
                  device: torch.device = torch.device('cuda')):
         # From https://grugbrain.dev/. Worth a read ya big brains ;-)
@@ -127,7 +128,7 @@ class nnUNetTrainer(object):
         self.output_folder_base = join(nnUNet_results, self.plans_manager.dataset_name,
                                        self.__class__.__name__ + '__' + self.plans_manager.plans_name + "__" + configuration) \
             if nnUNet_results is not None else None
-        self.output_folder = join(self.output_folder_base, f'fold_{fold}')
+        self.output_folder = join(self.output_folder_base, self.get_fold_name())
 
         self.preprocessed_dataset_folder = join(self.preprocessed_dataset_folder_base,
                                                 self.configuration_manager.data_identifier)
@@ -964,7 +965,7 @@ class nnUNetTrainer(object):
         # log best checkpoint to MLflow
         best_checkpoint_file = self.get_best_checkpoint_file_path()
         if self.use_mlflow and os.path.isfile(best_checkpoint_file):
-            self.logger.log_artifact(best_checkpoint_file, artifact_path="checkpoint")
+            self.logger.log_artifact(best_checkpoint_file, artifact_path=self.get_fold_name())
 
         # now we can delete latest
         if self.local_rank == 0 and isfile(join(self.output_folder, "checkpoint_latest.pth")):
@@ -1194,7 +1195,7 @@ class nnUNetTrainer(object):
                 }
                 torch.save(checkpoint, filename)
                 if self.use_mlflow and save_remote:
-                    self.logger.log_artifact(filename, "fold_{self.fold}")
+                    self.logger.log_artifact(filename, self.get_fold_name())
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
 
@@ -1422,7 +1423,7 @@ class nnUNetTrainer(object):
 
     def get_best_checkpoint_file_path(self) -> str:
         return join(self.output_folder, 'checkpoint_best.pth')
-    
+
 
     def get_hyperparams(self) -> dict:
         return {
@@ -1433,5 +1434,10 @@ class nnUNetTrainer(object):
                 "num_iterations_per_epoch": self.num_iterations_per_epoch,
                 "num_val_iterations_per_epoch": self.num_val_iterations_per_epoch,
                 "num_epochs": self.num_epochs,
-                "enable_deep_supervision": self.enable_deep_supervision
+                "enable_deep_supervision": self.enable_deep_supervision,
+                "output_folder_base": self.output_folder_base
         }
+
+
+    def get_fold_name(self):
+        return(f'fold_{self.fold}')
