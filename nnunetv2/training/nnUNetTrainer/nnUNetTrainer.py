@@ -1194,7 +1194,7 @@ class nnUNetTrainer(object):
                 }
                 torch.save(checkpoint, filename)
                 if self.use_mlflow and save_remote:
-                    self.logger.log_artifact(filename, "checkpoint/fold_{self.fold}")
+                    self.logger.log_artifact(filename, "fold_{self.fold}")
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
 
