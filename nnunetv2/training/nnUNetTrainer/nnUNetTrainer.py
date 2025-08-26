@@ -990,6 +990,12 @@ class nnUNetTrainer(object):
         shutil.copyfile(join(self.preprocessed_dataset_folder_base, 'dataset_fingerprint.json'),
                         join(self.output_folder_base, 'dataset_fingerprint.json'))
 
+        # log plans and dataset (fingerprint) json files to MLflow
+        if self.use_mlflow:
+            self.logger.log_artifact(join(self.output_folder_base, 'plans.json'), artifact_path=".")
+            self.logger.log_artifact(join(self.output_folder_base, 'dataset.json'), artifact_path=".")
+            self.logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path=".")
+
         # produces a pdf in output folder
         self.plot_network_architecture()
 
@@ -1238,7 +1244,7 @@ class nnUNetTrainer(object):
                 }
                 torch.save(checkpoint, filename)
                 if self.use_mlflow and save_remote:
-                    self.logger.log_artifact(filename, "checkpoint")
+                    self.logger.log_artifact(filename, "checkpoint/fold_{self.fold}")
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
 
