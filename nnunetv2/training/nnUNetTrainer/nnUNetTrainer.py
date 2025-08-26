@@ -75,6 +75,7 @@ from nnunetv2.utilities.plans_handling.plans_handler import PlansManager, Config
 
 
 class nnUNetTrainer(object):
+    
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict,
                  device: torch.device = torch.device('cuda')):
         # From https://grugbrain.dev/. Worth a read ya big brains ;-)
@@ -181,10 +182,6 @@ class nnUNetTrainer(object):
         self.log_file = join(self.output_folder, "training_log_%d_%d_%d_%02.0d_%02.0d_%02.0d.txt" %
                              (timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute,
                               timestamp.second))
-<<<<<<< HEAD
-        self.logger = MetaLogger(self.output_folder, continue_training)
-        self.logger.update_config(logger_config)
-=======
         
 
         ### Initializing logger depending on MLFLOW environment variables
@@ -196,9 +193,9 @@ class nnUNetTrainer(object):
             self.use_mlflow = True
         else:
             self.print_to_log_file("MLflow environment not detected, using default logging")
-            self.logger = nnUNetLogger()
+            self.logger = MetaLogger(self.output_folder, continue_training)
+            self.logger.update_config(logger_config)
             self.use_mlflow = False
->>>>>>> edd219a (Make MLflow logger inherit from nnunet logger, initialize logger in constructur of nnUNetTrainer)
 
         ### placeholders
         self.dataloader_train = self.dataloader_val = None  # see on_train_start
@@ -1014,7 +1011,7 @@ class nnUNetTrainer(object):
         # log best checkpoint to MLflow
         best_checkpoint_file = self.get_best_checkpoint_file_path()
         if self.use_mlflow and os.path.isfile(best_checkpoint_file):
-            self.logger.log_artifact(best_checkpoint_file, artifact_path="checkpoint")
+            self.logger.log_artifact(best_checkpoint_file, artifact_path=self.get_fold_name())
 
         # now we can delete latest
         if self.local_rank == 0 and isfile(join(self.output_folder, "checkpoint_latest.pth")):
@@ -1244,7 +1241,7 @@ class nnUNetTrainer(object):
                 }
                 torch.save(checkpoint, filename)
                 if self.use_mlflow and save_remote:
-                    self.logger.log_artifact(filename, "fold_{self.fold}")
+                    self.logger.log_artifact(filename, self.get_fold_name())
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
 
@@ -1481,7 +1478,7 @@ class nnUNetTrainer(object):
 
     def get_best_checkpoint_file_path(self) -> str:
         return join(self.output_folder, 'checkpoint_best.pth')
-    
+
 
     def get_hyperparams(self) -> dict:
         return {
@@ -1492,5 +1489,10 @@ class nnUNetTrainer(object):
                 "num_iterations_per_epoch": self.num_iterations_per_epoch,
                 "num_val_iterations_per_epoch": self.num_val_iterations_per_epoch,
                 "num_epochs": self.num_epochs,
-                "enable_deep_supervision": self.enable_deep_supervision
+                "enable_deep_supervision": self.enable_deep_supervision,
+                "output_folder_base": self.output_folder_base
         }
+
+
+    def get_fold_name(self):
+        return(f'fold_{self.fold}')
