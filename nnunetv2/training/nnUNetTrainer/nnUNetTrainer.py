@@ -992,9 +992,9 @@ class nnUNetTrainer(object):
 
         # log plans and dataset (fingerprint) json files to MLflow
         if self.use_mlflow:
-            self.logger.log_artifact(join(self.output_folder_base, 'plans.json'), artifact_path=".")
-            self.logger.log_artifact(join(self.output_folder_base, 'dataset.json'), artifact_path=".")
-            self.logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path=".")
+            self.logger.log_artifact(join(self.output_folder_base, 'plans.json'), artifact_path="")
+            self.logger.log_artifact(join(self.output_folder_base, 'dataset.json'), artifact_path="")
+            self.logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path="")
 
         # produces a pdf in output folder
         self.plot_network_architecture()
