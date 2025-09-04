@@ -1460,7 +1460,9 @@ class nnUNetTrainer(object):
                 "num_val_iterations_per_epoch": self.num_val_iterations_per_epoch,
                 "num_epochs": self.num_epochs,
                 "enable_deep_supervision": self.enable_deep_supervision,
-                "output_folder_base": self.output_folder_base
+                "output_folder_base": self.output_folder_base,
+                "fold": self.fold,
+                "batch_size": self.batch_size,
         }
 
 
