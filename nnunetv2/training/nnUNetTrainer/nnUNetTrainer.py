@@ -182,14 +182,12 @@ class nnUNetTrainer(object):
         self.log_file = join(self.output_folder, "training_log_%d_%d_%d_%02.0d_%02.0d_%02.0d.txt" %
                              (timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute,
                               timestamp.second))
-        
+
 
         ### Initializing logger depending on MLFLOW environment variables
-        mlflow_tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
-        mlflow_experiment_name = os.environ.get('MLFLOW_EXPERIMENT_NAME')
-        if mlflow_tracking_uri and mlflow_experiment_name:
+        if os.environ.get('MLFLOW_TRACKING_URI'):
             self.print_to_log_file("MLflow environment detected, using MLflow logging")
-            self.logger = MLflowLogger(mlflow_tracking_uri, mlflow_experiment_name)
+            self.logger = MLflowLogger()
             self.use_mlflow = True
         else:
             self.print_to_log_file("MLflow environment not detected, using default logging")
