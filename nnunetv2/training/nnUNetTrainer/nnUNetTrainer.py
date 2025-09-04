@@ -1016,7 +1016,12 @@ class nnUNetTrainer(object):
                     final_checkpoint_file, 
                     plans_file, 
                     dataset_file,
-                    step = self.current_epoch
+                    step = self.current_epoch,
+                    tags = {
+                        "is_best": self.best_checkpoint_epoch == self.current_epoch,
+                        "checkpoint_file": final_checkpoint_file,
+                        "from_epoch": self.current_epoch,
+                        }
                 )        
 
         # log model for best checkpoint to MLflow
@@ -1027,7 +1032,12 @@ class nnUNetTrainer(object):
                     best_checkpoint_file, 
                     plans_file, 
                     dataset_file,
-                    step = self.best_checkpoint_epoch
+                    step = self.best_checkpoint_epoch,
+                    tags = {
+                        "is_best": True,
+                        "checkpoint_file": final_checkpoint_file,
+                        "from_epoch": self.best_checkpoint_epoch,
+                        }                    
                 )
 
         self.current_epoch += 1 
