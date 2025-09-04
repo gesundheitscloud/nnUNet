@@ -957,14 +957,31 @@ class nnUNetTrainer(object):
         # dirty hack because on_epoch_end increments the epoch counter and this is executed afterwards.
         # This will lead to the wrong current epoch to be stored
         self.current_epoch -= 1
-        self.save_checkpoint(join(self.output_folder, "checkpoint_final.pth"), save_remote=True)
-        self.current_epoch += 1
+        plans_file = join(self.output_folder_base, 'plans.json')
+        dataset_file = join(self.output_folder_base, 'dataset.json')
+        final_checkpoint_file = join(self.output_folder, "checkpoint_final.pth")
+        self.save_checkpoint(final_checkpoint_file, save_remote=False)
 
-        # log best checkpoint to MLflow
-        best_checkpoint_file = self.get_best_checkpoint_file_path()
+        # lof model for final checkpoint to MLflow
+        if self.use_mlflow and os.path.isfile(final_checkpoint_file):
+            self.logger.log_model(
+                    "%s-final-model" % self.get_fold_name(), 
+                    final_checkpoint_file, 
+                    plans_file, 
+                    dataset_file,
+                )        
+
+        # log model for best checkpoint to MLflow
+        best_checkpoint_file = join(self.output_folder, 'checkpoint_best.pth')
         if self.use_mlflow and os.path.isfile(best_checkpoint_file):
-            self.logger.log_artifact(best_checkpoint_file, artifact_path=self.get_fold_name())
+            self.logger.log_model(
+                    "%s-best-model" % self.get_fold_name(), 
+                    best_checkpoint_file, 
+                    plans_file, 
+                    dataset_file,
+                )
 
+        self.current_epoch += 1 
         # now we can delete latest
         if self.local_rank == 0 and isfile(join(self.output_folder, "checkpoint_latest.pth")):
             os.remove(join(self.output_folder, "checkpoint_latest.pth"))
@@ -1163,7 +1180,7 @@ class nnUNetTrainer(object):
         if self._best_ema is None or self.logger.my_fantastic_logging['ema_fg_dice'][-1] > self._best_ema:
             self._best_ema = self.logger.my_fantastic_logging['ema_fg_dice'][-1]
             self.print_to_log_file(f"Yayy! New best EMA pseudo Dice: {np.round(self._best_ema, decimals=4)}")
-            self.save_checkpoint(self.get_best_checkpoint_file_path(), save_remote=False)
+            self.save_checkpoint(join(self.output_folder, 'checkpoint_best.pth'), save_remote=False)
 
         if self.local_rank == 0:
             self.logger.plot_progress_png(self.output_folder)
@@ -1417,10 +1434,6 @@ class nnUNetTrainer(object):
             self.on_epoch_end()
 
         self.on_train_end()
-
-
-    def get_best_checkpoint_file_path(self) -> str:
-        return join(self.output_folder, 'checkpoint_best.pth')
 
 
     def get_hyperparams(self) -> dict:

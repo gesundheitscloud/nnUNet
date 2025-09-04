@@ -16,6 +16,11 @@ from nnunetv2.utilities.label_handling.label_handling import determine_num_input
 
 class nnUNetModel(mlflow.pyfunc.PythonModel):
 
+    def __init__(self):
+        super().__init__()
+        self.num_processes = 2
+        self.num_processes_segmentation_export = 2
+
     def __getstate__(self):
         # Copy the instance dictionary
         state = self.__dict__.copy()
@@ -83,6 +88,7 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
                                              dataset_json, trainer_name, inference_allowed_mirroring_axes)
 
 
+    # model_input is a list of tuples (img, properties) as returned by SimpleITKIO().read_images each
     def predict(self, model_input):
         imgs = [img for img, _ in model_input]
         props = [prop for _, prop in model_input]
@@ -91,9 +97,8 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
             segs_from_prev_stage_or_list_of_segs_from_prev_stage = None, 
             properties_or_list_of_properties = props, 
             truncated_ofname = None, 
-            num_processes=2, 
+            num_processes = self.num_processes, 
             save_probabilities=False, 
-            num_processes_segmentation_export=2,
+            num_processes_segmentation_export = self.num_processes_segmentation_export,
             )
         return prediction
-    
