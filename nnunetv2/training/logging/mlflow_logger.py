@@ -55,6 +55,7 @@ class MLflowLogger(nnUNetLogger):
         except Exception as e:
             print(f"MLflowLogger: Failed to log model to MLflow: {e}")
 
+
     def check_mlflow_run(self):
         if mlflow.active_run() is None:
             raise RuntimeError("No active MLflow run. Please start a run before logging metrics.")   

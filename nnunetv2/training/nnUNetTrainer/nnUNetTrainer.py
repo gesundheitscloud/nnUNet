@@ -161,6 +161,7 @@ class nnUNetTrainer(object):
         self.num_val_iterations_per_epoch = 50
         self.num_epochs = 1000
         self.current_epoch = 0
+        self.best_checkpoint_epoch = 0
         self.enable_deep_supervision = True
 
         ### Dealing with labels/regions
@@ -1015,16 +1016,18 @@ class nnUNetTrainer(object):
                     final_checkpoint_file, 
                     plans_file, 
                     dataset_file,
+                    step = self.current_epoch
                 )        
 
         # log model for best checkpoint to MLflow
         best_checkpoint_file = join(self.output_folder, 'checkpoint_best.pth')
-        if self.use_mlflow and os.path.isfile(best_checkpoint_file):
+        if self.use_mlflow and os.path.isfile(best_checkpoint_file) and self.best_checkpoint_epoch != self.current_epoch:
             self.logger.log_model(
                     "%s-best-model" % self.get_fold_name(), 
                     best_checkpoint_file, 
                     plans_file, 
                     dataset_file,
+                    step = self.best_checkpoint_epoch
                 )
 
         self.current_epoch += 1 
@@ -1227,6 +1230,7 @@ class nnUNetTrainer(object):
             self._best_ema = self.logger.get_value('ema_fg_dice', step=-1)
             self.print_to_log_file(f"Yayy! New best EMA pseudo Dice: {np.round(self._best_ema, decimals=4)}")
             self.save_checkpoint(join(self.output_folder, 'checkpoint_best.pth'), save_remote=False)
+            self.best_checkpoint_epoch = self.current_epoch
 
         if self.local_rank == 0:
             self.logger.plot_progress_png(self.output_folder)
