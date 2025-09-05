@@ -1,6 +1,8 @@
 import os
 from typing import Any, Dict, List
 import mlflow
+from mlflow.models import ModelSignature
+from mlflow.types import TensorSpec, Schema, ParamSchema, ParamSpec
 import numpy as np
 from pydantic import BaseModel
 import torch
@@ -88,17 +90,35 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
                                              dataset_json, trainer_name, inference_allowed_mirroring_axes)
 
 
-    # model_input is a list of tuples (img, properties) as returned by SimpleITKIO().read_images each
-    def predict(self, model_input):
-        imgs = [img for img, _ in model_input]
-        props = [prop for _, prop in model_input]
+    # model_input is a dict with two tensors of form {"image": np.ndarray, "spacing": np.ndarray}
+    # where image is a 4D numpy array (C, X, Y, Z) (float32) and spacing is 3D numpy array (X, Y, Z) (float32)
+    # img, props = SimpleITKIO().read_images(["path/to/image.nii.gz"])
+    # img = np.array(img, dtype=np.float32)
+    # spacing = np.array(props['spacing'], dtype=np.float32)
+    # prediction = model.predict({"image": img, "spacing": spacing})
+    # predict() returns a 3D numpy array (X, Y, Z) (float32) of the predicted segmentation
+    def predict(self, model_input, params = None):
+        image = model_input["image"]
+        properties = {"spacing": model_input["spacing"]}
         prediction = self.predictor.predict_from_list_of_npy_arrays(
-            image_or_list_of_images = imgs, 
+            image_or_list_of_images = image, 
             segs_from_prev_stage_or_list_of_segs_from_prev_stage = None, 
-            properties_or_list_of_properties = props, 
+            properties_or_list_of_properties = properties, 
             truncated_ofname = None, 
-            num_processes = self.num_processes, 
+            num_processes = 1, 
             save_probabilities=False, 
-            num_processes_segmentation_export = self.num_processes_segmentation_export,
+            num_processes_segmentation_export = 1,
             )
-        return prediction
+        return prediction[0][0]
+
+
+    @staticmethod
+    def model_signature():
+        input_schema = Schema([
+                TensorSpec(np.dtype(np.float32), (-1, -1, -1, -1), "image"),
+                TensorSpec(np.dtype(np.float32), (3,), "spacing"),
+            ])
+        output_schema = Schema([
+                TensorSpec(np.dtype(np.float32), (-1, -1, -1))
+            ])
+        return ModelSignature(inputs=input_schema, outputs=output_schema)
