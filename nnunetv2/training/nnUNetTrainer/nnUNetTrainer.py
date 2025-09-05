@@ -1485,8 +1485,7 @@ class nnUNetTrainer(object):
             folder_with_segs_from_previous_stage=self.folder_with_segs_from_previous_stage,
         )
         # Load the first validation sample
-        first_tr_key = dataset_tr[0]
-        data, _, _, properties = dataset_tr.load_case(first_tr_key)
+        data, _, _, properties = dataset_tr.load_case(tr_keys[0])
 
         # we do [:] to convert blosc2 to numpy
         return (data[:], properties)
