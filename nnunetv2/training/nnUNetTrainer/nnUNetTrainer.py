@@ -1467,7 +1467,6 @@ class nnUNetTrainer(object):
                 "enable_deep_supervision": self.enable_deep_supervision,
                 "output_folder_base": self.output_folder_base,
                 "fold": self.fold,
-                "batch_size": self.batch_size,
         }
 
 
