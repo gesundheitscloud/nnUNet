@@ -963,6 +963,9 @@ class nnUNetTrainer(object):
         final_checkpoint_file = join(self.output_folder, "checkpoint_final.pth")
         self.save_checkpoint(final_checkpoint_file, save_remote=False)
 
+        input_example_data, input_example_prop = self.get_input_example()
+        input_example = (input_example_data, input_example_prop)
+
         # lof model for final checkpoint to MLflow
         if self.use_mlflow and os.path.isfile(final_checkpoint_file):
             self.logger.log_model(
@@ -970,6 +973,7 @@ class nnUNetTrainer(object):
                     final_checkpoint_file, 
                     plans_file, 
                     dataset_file,
+                    input_example = input_example,
                     step = self.current_epoch,
                     tags = {
                         "is_best": self.best_checkpoint_epoch == self.current_epoch,
@@ -986,6 +990,7 @@ class nnUNetTrainer(object):
                     best_checkpoint_file, 
                     plans_file, 
                     dataset_file,
+                    input_example = input_example,
                     step = self.best_checkpoint_epoch,
                     tags = {
                         "is_best": True,
@@ -1468,3 +1473,21 @@ class nnUNetTrainer(object):
 
     def get_fold_name(self):
         return(f'fold_{self.fold}')
+    
+
+    # Example input to use for logging the model to MLflow
+    def get_input_example(self):
+        # Get the training and validation keys
+        tr_keys, _ = self.do_split()
+        # Initialize the validation dataset
+        dataset_tr = self.dataset_class(
+            self.preprocessed_dataset_folder,
+            tr_keys,
+            folder_with_segs_from_previous_stage=self.folder_with_segs_from_previous_stage,
+        )
+        # Load the first validation sample
+        first_tr_key = dataset_tr[0]
+        data, _, _, properties = dataset_tr.load_case(first_tr_key)
+
+        # we do [:] to convert blosc2 to numpy
+        return (data[:], properties)
