@@ -109,7 +109,7 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
             save_probabilities=False, 
             num_processes_segmentation_export = 1,
             )
-        return prediction[0][0]
+        return prediction[0]
 
 
     @staticmethod
