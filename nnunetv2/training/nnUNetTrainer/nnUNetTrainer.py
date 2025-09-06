@@ -1009,9 +1009,6 @@ class nnUNetTrainer(object):
         final_checkpoint_file = join(self.output_folder, "checkpoint_final.pth")
         self.save_checkpoint(final_checkpoint_file, save_remote=False)
 
-        input_example_data, input_example_prop = self.get_input_example()
-        input_example = (input_example_data, input_example_prop)
-
         # lof model for final checkpoint to MLflow
         if self.use_mlflow and os.path.isfile(final_checkpoint_file):
             self.logger.log_model(
@@ -1035,7 +1032,6 @@ class nnUNetTrainer(object):
                     best_checkpoint_file, 
                     plans_file, 
                     dataset_file,
-                    input_example = input_example,
                     step = self.best_checkpoint_epoch,
                     tags = {
                         "is_best": True,
