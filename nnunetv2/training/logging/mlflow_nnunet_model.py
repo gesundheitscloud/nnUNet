@@ -112,16 +112,21 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
         return prediction[0]
 
 
-    # wrapper for predict(), mainly for the purpose to give an example on how to read and write data 
+    # wrapper for model.predict(), mainly for the purpose to give an example on how to read and write data 
     # to/from file when using predcit(). Consider to use model.predictor.predict_from_files() or related 
     # predictor methods directly. Especially when predicting multiple files and you want to make use of 
     # the predictor's multiprocessing capabilities.
-    def predict_file(self, input_file, output_file, params = None):
+    # We use a static method here so that we can use it after mlflow.pyfunc.load_model(), which returns
+    # a pyfunc.PyFuncModel object and not a nnUNetModel object.
+    # Usage:
+    # predict_file(loaded_model, "/path/to/input_image.nii.gz", "/path/to/output_segmentation.nii.gz")
+    @staticmethod
+    def predict_file(model, input_file, output_file, params = None):
         img, props = SimpleITKIO().read_images([input_file])
         img = np.array(img, dtype=np.float32)
         spacing = np.array(props['spacing'], dtype=np.float32)
         model_input = {"image": img, "spacing": spacing}
-        segmentation = self.predict(model_input, params)
+        segmentation = model.predict(model_input, params)
         SimpleITKIO().write_seg(segmentation, output_file, props)
 
 
