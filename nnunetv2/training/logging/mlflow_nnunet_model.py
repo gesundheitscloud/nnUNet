@@ -10,6 +10,7 @@ import torch
 from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile, save_json, maybe_mkdir_p
 
 from nnunetv2 import __path__ as nnunetv2_path
+from nnunetv2.imageio.simpleitk_reader_writer import SimpleITKIO
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 from nnunetv2.utilities.plans_handling.plans_handler import PlansManager, ConfigurationManager
 from nnunetv2.utilities.find_class_by_name import recursive_find_python_class
@@ -23,6 +24,9 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
         self.num_processes = 2
         self.num_processes_segmentation_export = 2
 
+    # getstate and setstate are used to control what is pickled and unpickled.
+    # We don't want to pickle the predictor object but rebuild it from the artifacts 
+    # by configure() instead.
     def __getstate__(self):
         # Copy the instance dictionary
         state = self.__dict__.copy()
@@ -92,10 +96,6 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
 
     # model_input is a dict with two tensors of form {"image": np.ndarray, "spacing": np.ndarray}
     # where image is a 4D numpy array (C, X, Y, Z) (float32) and spacing is 3D numpy array (X, Y, Z) (float32)
-    # img, props = SimpleITKIO().read_images(["path/to/image.nii.gz"])
-    # img = np.array(img, dtype=np.float32)
-    # spacing = np.array(props['spacing'], dtype=np.float32)
-    # prediction = model.predict({"image": img, "spacing": spacing})
     # predict() returns a 3D numpy array (X, Y, Z) (float32) of the predicted segmentation
     def predict(self, model_input, params = None):
         image = model_input["image"]
@@ -112,6 +112,19 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
         return prediction[0]
 
 
+    # wrapper for predict(), mainly for the purpose to give an example on how to read and write data 
+    # to/from file when using predcit(). Consider to use model.predictor.predict_from_files() or related 
+    # predictor methods directly. Especially when predicting multiple files and you want to make use of 
+    # the predictor's multiprocessing capabilities.
+    def predict_file(self, input_file, output_file, params = None):
+        img, props = SimpleITKIO().read_images([input_file])
+        img = np.array(img, dtype=np.float32)
+        spacing = np.array(props['spacing'], dtype=np.float32)
+        model_input = {"image": img, "spacing": spacing}
+        segmentation = self.predict(model_input, params)
+        SimpleITKIO().write_seg(segmentation, output_file, props)
+
+
     @staticmethod
     def model_signature():
         input_schema = Schema([
@@ -122,3 +135,10 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
                 TensorSpec(np.dtype(np.float32), (-1, -1, -1))
             ])
         return ModelSignature(inputs=input_schema, outputs=output_schema)
+
+
+    @staticmethod
+    def input_example():
+        img = np.random.rand(1, 128, 128, 128).astype(np.float32)
+        spacing = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+        return {"image": img, "spacing": spacing}
