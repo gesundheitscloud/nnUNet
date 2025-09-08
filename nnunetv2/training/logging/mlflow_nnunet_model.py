@@ -112,14 +112,19 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
         return prediction[0]
 
 
-    # wrapper for model.predict(), mainly for the purpose to give an example on how to read and write data 
-    # to/from file when using predcit(). Consider to use model.predictor.predict_from_files() or related 
-    # predictor methods directly. Especially when predicting multiple files and you want to make use of 
-    # the predictor's multiprocessing capabilities.
-    # We use a static method here so that we can use it after mlflow.pyfunc.load_model(), which returns
-    # a pyfunc.PyFuncModel object and not a nnUNetModel object.
+    # Wrapper function that serves as example on how to read and write data to/from file with predict(). 
+    # We use a static method for use with mlflow.pyfunc.load_model(), which is a pyfunc.PyFuncModel object 
+    # and not a nnUNetModel object.
     # Usage:
+    # loaded_model = mlflow.pyfunc.load_model(model_uri)
     # predict_file(loaded_model, "/path/to/input_image.nii.gz", "/path/to/output_segmentation.nii.gz")
+    #
+    # When predicting multiple files consider using the nnUNet predictor's multiprocessing capabilities. 
+    # For this you will first need  to ...
+    # 1. Download the checkpoint, plan and dataset file artifacts
+    # 2. Instantiate a nnUNetModel object
+    # 3. Use the artifacts to configure() the nnUNetModel object
+    # 4. Access eg model.predctor.predict_from_files() to predict multiple files with multiprocessing
     @staticmethod
     def predict_file(model, input_file, output_file, params = None):
         img, props = SimpleITKIO().read_images([input_file])
@@ -144,6 +149,6 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
 
     @staticmethod
     def input_example():
-        img = np.random.rand(1, 128, 128, 128).astype(np.float32)
+        img = np.random.rand(1, 16, 64, 64).astype(np.float32)
         spacing = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         return {"image": img, "spacing": spacing}

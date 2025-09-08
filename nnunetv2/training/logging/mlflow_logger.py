@@ -53,6 +53,7 @@ class MLflowLogger(nnUNetLogger):
                     "dataset": dataset_file
                 },
                 signature = nnUNetModel.model_signature(),
+                input_example = nnUNetModel.input_example(),
                 *args,
                 **kwargs,
             )
