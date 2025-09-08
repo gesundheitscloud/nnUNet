@@ -627,7 +627,7 @@ class nnUNetTrainer(object):
             tr_keys = case_identifiers
             val_keys = tr_keys
         else:
-            splits_file = join(self.preprocessed_dataset_folder_base, "splits_final.json")
+            splits_file = self.get_splits_file()
             dataset = self.dataset_class(self.preprocessed_dataset_folder,
                                          identifiers=None,
                                          folder_with_segs_from_previous_stage=self.folder_with_segs_from_previous_stage)
@@ -992,6 +992,10 @@ class nnUNetTrainer(object):
             self.logger.log_artifact(join(self.output_folder_base, 'dataset.json'), artifact_path="")
             self.logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path="")
 
+            splits_file =  self.get_splits_file()
+            if os.isfile(splits_file):
+                self.logger.log_artifact(splits_file, artifact_path="")
+
         # produces a pdf in output folder
         self.plot_network_architecture()
 
@@ -1059,6 +1063,9 @@ class nnUNetTrainer(object):
 
         empty_cache(self.device)
         self.print_to_log_file("Training done.")
+        if self.use_mlflow and os.isfile(self.log_file):
+            self.logger.log_artifact(self.log_file, artifact_path="")
+
 
     def on_train_epoch_start(self):
         self.network.train()
@@ -1522,3 +1529,6 @@ class nnUNetTrainer(object):
 
     def get_fold_name(self):
         return(f'fold_{self.fold}')
+    
+    def get_splits_file(self):
+        join(self.preprocessed_dataset_folder_base, "splits_final.json")
