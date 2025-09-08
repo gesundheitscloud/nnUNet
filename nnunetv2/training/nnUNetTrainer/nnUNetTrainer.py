@@ -993,7 +993,7 @@ class nnUNetTrainer(object):
             self.logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path="")
 
             splits_file =  self.get_splits_file()
-            if os.isfile(splits_file):
+            if isfile(splits_file):
                 self.logger.log_artifact(splits_file, artifact_path="")
 
         # produces a pdf in output folder
@@ -1014,7 +1014,7 @@ class nnUNetTrainer(object):
         self.save_checkpoint(final_checkpoint_file, save_remote=False)
 
         # lof model for final checkpoint to MLflow
-        if self.use_mlflow and os.path.isfile(final_checkpoint_file):
+        if self.use_mlflow and isfile(final_checkpoint_file):
             self.logger.log_model(
                     "%s-final-model" % self.get_fold_name(), 
                     final_checkpoint_file, 
@@ -1030,7 +1030,7 @@ class nnUNetTrainer(object):
 
         # log model for best checkpoint to MLflow
         best_checkpoint_file = join(self.output_folder, 'checkpoint_best.pth')
-        if self.use_mlflow and os.path.isfile(best_checkpoint_file) and self.best_checkpoint_epoch != self.current_epoch:
+        if self.use_mlflow and isfile(best_checkpoint_file) and self.best_checkpoint_epoch != self.current_epoch:
             self.logger.log_model(
                     "%s-best-model" % self.get_fold_name(), 
                     best_checkpoint_file, 
@@ -1063,7 +1063,7 @@ class nnUNetTrainer(object):
 
         empty_cache(self.device)
         self.print_to_log_file("Training done.")
-        if self.use_mlflow and os.isfile(self.log_file):
+        if self.use_mlflow and isfile(self.log_file):
             self.logger.log_artifact(self.log_file, artifact_path="")
 
 
@@ -1532,3 +1532,5 @@ class nnUNetTrainer(object):
     
     def get_splits_file(self):
         return join(self.preprocessed_dataset_folder_base, "splits_final.json")
+
+
