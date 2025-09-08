@@ -1476,4 +1476,4 @@ class nnUNetTrainer(object):
         return(f'fold_{self.fold}')
     
     def get_splits_file(self):
-        join(self.preprocessed_dataset_folder_base, "splits_final.json")
+        return join(self.preprocessed_dataset_folder_base, "splits_final.json")
