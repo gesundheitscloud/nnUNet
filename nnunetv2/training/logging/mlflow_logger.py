@@ -1,5 +1,5 @@
 from nnunetv2.training.logging.nnunet_logger import nnUNetLogger
-from nnunetv2.training.logging.mlflow_nnunet_model import nnUNetModel
+import nnunetv2.training.logging.mlflow_nnunet_model as mlflow_nnunet_model
 import types
 import mlflow
 import numpy as np
@@ -44,17 +44,17 @@ class MLflowLogger(nnUNetLogger):
     def log_model(self, name, checkpoint_file, plans_file, dataset_file, *args, **kwargs):
         self.check_mlflow_run()
         try:
-            cloudpickle.register_pickle_by_value(nnUNetModel)
+            cloudpickle.register_pickle_by_value(mlflow_nnunet_model)
             return mlflow.pyfunc.log_model(
                 name = name,
-                python_model = nnUNetModel(),
+                python_model = mlflow_nnunet_model.nnUNetModel(),
                 artifacts={
                     "checkpoint": checkpoint_file,
                     "plans": plans_file,
                     "dataset": dataset_file
                 },
-                signature = nnUNetModel.model_signature(),
-                input_example = nnUNetModel.input_example(),                
+                signature = mlflow_nnunet_model.nnUNetModel.model_signature(),
+                input_example = mlflow_nnunet_model.nnUNetModel.input_example(),                
                 *args,
                 **kwargs,
             )
