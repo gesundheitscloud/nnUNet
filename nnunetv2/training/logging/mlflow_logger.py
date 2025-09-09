@@ -1,8 +1,7 @@
 from nnunetv2.training.logging.nnunet_logger import nnUNetLogger
 from nnunetv2.training.logging.mlflow_nnunet_model import nnUNetModel
-import os
+import types
 import mlflow
-from mlflow.models import infer_signature
 import numpy as np
 
 
@@ -46,14 +45,14 @@ class MLflowLogger(nnUNetLogger):
         try:
             return mlflow.pyfunc.log_model(
                 name = name,
-                python_model = nnUNetModel(),
+                python_model = types.new_class("nnUNetModelDyn" (nnUNetModel,)),
                 artifacts={
                     "checkpoint": checkpoint_file,
                     "plans": plans_file,
                     "dataset": dataset_file
                 },
                 signature = nnUNetModel.model_signature(),
-                input_example = nnUNetModel.input_example(),
+                input_example = nnUNetModel.input_example(),                
                 *args,
                 **kwargs,
             )
