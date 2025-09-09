@@ -43,7 +43,7 @@ class MLflowLogger(nnUNetLogger):
     def log_model(self, name, checkpoint_file, plans_file, dataset_file, *args, **kwargs):
         self.check_mlflow_run()
         try:
-            nnUNetModelDyn = types.new_class("nnUNetModelDyn" (nnUNetModel,)),
+            nnUNetModelDyn = types.new_class("nnUNetModelDyn", (nnUNetModel,))
             return mlflow.pyfunc.log_model(
                 name = name,
                 python_model = nnUNetModelDyn(),
