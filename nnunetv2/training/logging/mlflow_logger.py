@@ -3,6 +3,7 @@ from nnunetv2.training.logging.mlflow_nnunet_model import nnUNetModel
 import types
 import mlflow
 import numpy as np
+import cloudpickle
 
 
 class MLflowLogger(nnUNetLogger):
@@ -43,10 +44,10 @@ class MLflowLogger(nnUNetLogger):
     def log_model(self, name, checkpoint_file, plans_file, dataset_file, *args, **kwargs):
         self.check_mlflow_run()
         try:
-            nnUNetModelDyn = types.new_class("nnUNetModelDyn", (nnUNetModel,))
+            cloudpickle.register_pickle_by_value(nnUNetModel)
             return mlflow.pyfunc.log_model(
                 name = name,
-                python_model = nnUNetModelDyn(),
+                python_model = nnUNetModel(),
                 artifacts={
                     "checkpoint": checkpoint_file,
                     "plans": plans_file,
