@@ -1,18 +1,16 @@
 import os
-from typing import Any, Dict, List
 import mlflow
 from mlflow.models import ModelSignature
-from mlflow.types import TensorSpec, Schema, ParamSchema, ParamSpec
+from mlflow.types import TensorSpec, Schema
 import numpy as np
-from pydantic import BaseModel
 import torch
 
-from batchgenerators.utilities.file_and_folder_operations import join, load_json, isfile, save_json, maybe_mkdir_p
+from batchgenerators.utilities.file_and_folder_operations import join, load_json
 
 from nnunetv2 import __path__ as nnunetv2_path
 from nnunetv2.imageio.simpleitk_reader_writer import SimpleITKIO
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
-from nnunetv2.utilities.plans_handling.plans_handler import PlansManager, ConfigurationManager
+from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 from nnunetv2.utilities.find_class_by_name import recursive_find_python_class
 from nnunetv2.utilities.label_handling.label_handling import determine_num_input_channels
 
@@ -75,10 +73,10 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
 
         configuration_manager = plans_manager.get_configuration(configuration_name)        
         num_input_channels = determine_num_input_channels(plans_manager, configuration_manager, dataset_json)
-        trainer_class = recursive_find_python_class(join(nnunetv2_path[0], "training", "nnUNetTrainer"),
-                                                    trainer_name, 'nnunetv2.training.nnUNetTrainer')
+        nnunet_trainer_path = join(nnunetv2_path[0], "training", "nnUNetTrainer")
+        trainer_class = recursive_find_python_class(nnunet_trainer_path, trainer_name, 'nnunetv2.training.nnUNetTrainer')
         if trainer_class is None:
-            raise RuntimeError(f'Unable to locate trainer class {trainer_name} in nnunetv2.training.nnUNetTrainer.')
+            raise RuntimeError(f'Unable to locate trainer class {trainer_name} in nnunetv2.training.nnUNetTrainer using path {nnunet_trainer_path}.')
         
         network = trainer_class.build_network_architecture(
             configuration_manager.network_arch_class_name,
