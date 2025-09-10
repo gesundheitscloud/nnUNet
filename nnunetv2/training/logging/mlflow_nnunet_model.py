@@ -7,7 +7,6 @@ import torch
 
 from batchgenerators.utilities.file_and_folder_operations import join, load_json
 
-from nnunetv2 import __path__ as nnunetv2_path
 from nnunetv2.imageio.simpleitk_reader_writer import SimpleITKIO
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
@@ -73,6 +72,7 @@ class nnUNetModel(mlflow.pyfunc.PythonModel):
 
         configuration_manager = plans_manager.get_configuration(configuration_name)        
         num_input_channels = determine_num_input_channels(plans_manager, configuration_manager, dataset_json)
+        from nnunetv2 import __path__ as nnunetv2_path
         nnunet_trainer_path = join(nnunetv2_path[0], "training", "nnUNetTrainer")
         trainer_class = recursive_find_python_class(nnunet_trainer_path, trainer_name, 'nnunetv2.training.nnUNetTrainer')
         if trainer_class is None:
