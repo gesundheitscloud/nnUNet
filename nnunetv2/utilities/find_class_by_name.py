@@ -7,7 +7,7 @@ from batchgenerators.utilities.file_and_folder_operations import *
 def recursive_find_python_class(folder: str, class_name: str, current_module: str):
     tr = None
     for importer, modname, ispkg in pkgutil.iter_modules([folder]):
-        print(modname, ispkg)
+        # print(modname, ispkg)
         if not ispkg:
             m = importlib.import_module(current_module + "." + modname)
             if hasattr(m, class_name):

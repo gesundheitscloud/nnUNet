@@ -45,16 +45,16 @@ class MLflowLogger(nnUNetLogger):
         self.check_mlflow_run()
         try:
             cloudpickle.register_pickle_by_value(mlflow_nnunet_model)
+            model_class = mlflow_nnunet_model.nnUNetModelForFileInput
             return mlflow.pyfunc.log_model(
                 name = name,
-                python_model = mlflow_nnunet_model.nnUNetModel(),
+                python_model = model_class(),
                 artifacts={
                     "checkpoint": checkpoint_file,
                     "plans": plans_file,
                     "dataset": dataset_file
                 },
-                signature = mlflow_nnunet_model.nnUNetModel.model_signature(),
-                input_example = mlflow_nnunet_model.nnUNetModel.input_example(),                
+                signature = model_class.model_signature(),
                 *args,
                 **kwargs,
             )
