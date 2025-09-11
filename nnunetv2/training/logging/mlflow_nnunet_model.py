@@ -59,7 +59,7 @@ class nnUNetModelAbstract(mlflow.pyfunc.PythonModel):
             device=device,
             verbose=False,
             verbose_preprocessing=False,
-            allow_tqdm=True
+            allow_tqdm=False
         )
 
         dataset_json = load_json(dataset_file)
