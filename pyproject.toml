@@ -52,7 +52,7 @@ dependencies = [
     "batchgeneratorsv2>=0.3.2",
     "einops",
     "blosc2>=3.0.0b1",
-    "mlflow>=3.3.1"
+    "azureml-mlflow>=1.60.0"
 ]
 
 [project.urls]
