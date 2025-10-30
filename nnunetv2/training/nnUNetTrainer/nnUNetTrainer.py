@@ -1021,7 +1021,7 @@ class nnUNetTrainer(object):
                     plans_file, 
                     dataset_file,
                     # step = self.current_epoch,
-                    tags = {
+                    metadata = {
                         "is_best": self.best_checkpoint_epoch == self.current_epoch,
                         "checkpoint_file": final_checkpoint_file,
                         "from_epoch": self.current_epoch,
@@ -1037,7 +1037,7 @@ class nnUNetTrainer(object):
                     plans_file, 
                     dataset_file,
                     # step = self.best_checkpoint_epoch,
-                    tags = {
+                    metadata = {
                         "is_best": True,
                         "checkpoint_file": final_checkpoint_file,
                         "from_epoch": self.best_checkpoint_epoch,
