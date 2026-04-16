@@ -193,8 +193,8 @@ class nnUNetTrainer(object):
         else:
             self.print_to_log_file("MLflow environment not detected, using default logging")
             self.logger = MetaLogger(self.output_folder, continue_training)
+            self.logger.update_config(logger_config)
             self.use_mlflow = False
-        self.logger.update_config(logger_config)
 
         ### placeholders
         self.dataloader_train = self.dataloader_val = None  # see on_train_start
