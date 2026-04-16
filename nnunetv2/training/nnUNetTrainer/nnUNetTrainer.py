@@ -995,7 +995,7 @@ class nnUNetTrainer(object):
 
             splits_file =  self.get_splits_file()
             if isfile(splits_file):
-                self.mlflow_logger.logger.log_artifact(splits_file, artifact_path="")
+                self.mlflow_logger.log_artifact(splits_file, artifact_path="")
 
         # produces a pdf in output folder
         self.plot_network_architecture()
