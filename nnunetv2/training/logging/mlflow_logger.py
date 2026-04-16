@@ -1,4 +1,4 @@
-from nnunetv2.training.logging.nnunet_logger import MetaLogger
+from nnunetv2.training.logging.nnunet_logger import LocalLogger
 import nnunetv2.training.logging.mlflow_nnunet_model as mlflow_nnunet_model
 import types
 import mlflow
@@ -6,7 +6,7 @@ import numpy as np
 import cloudpickle
 
 
-class MLflowLogger(MetaLogger):
+class MLflowLogger(LocalLogger):
 
     def __init__(self, verbose: bool = False):
         super().__init__(verbose=verbose)
