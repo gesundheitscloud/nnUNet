@@ -37,14 +37,6 @@ class MLflowLogger:
         except Exception as e:
             print(f"MLflowLogger: Failed to log metric {key} with value {value} at step {step}: {e}")
 
-    def log_summary(self, key, value):
-        """Called by MetaLogger for one-off values like final validation dice."""
-        self.check_mlflow_run()
-        try:
-            mlflow.log_metric(key, float(value))
-        except Exception as e:
-            print(f"MLflowLogger: Failed to log summary {key}: {e}")
-
     # --- Your custom methods (called from your trainer, not from MetaLogger) ---
 
     def log_artifact(self, filename, artifact_path):
@@ -53,6 +45,13 @@ class MLflowLogger:
             return mlflow.log_artifact(filename, artifact_path=artifact_path)
         except Exception as e:
             print(f"MLflowLogger: Failed to log {filename} to artifact path {artifact_path}: {e}")
+    
+    def log_params(self, params):
+        self.check_mlflow_run()
+        try: 
+            return mlflow.log_params(params)
+        except Exception as e:
+            print(f"MLflowLogger: Failed to log parameters to MLflow: {e}")
 
     def log_model(self, name, checkpoint_file, plans_file, dataset_file, *args, **kwargs):
         self.check_mlflow_run()
