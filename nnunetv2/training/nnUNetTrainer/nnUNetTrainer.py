@@ -188,7 +188,9 @@ class nnUNetTrainer(object):
         ### Initializing logger depending on MLFLOW environment variables
         if os.environ.get('MLFLOW_TRACKING_URI'):
             self.print_to_log_file("MLflow environment detected, using MLflow logging")
-            self.logger = MLflowLogger()
+            # Append MLflow logger to the MetaLogger's logger list
+            self.mlflow_logger = MLflowLogger()
+            self.logger.loggers.append(self.mlflow_logger)
             self.use_mlflow = True
         else:
             self.print_to_log_file("MLflow environment not detected, using default logging")
@@ -988,13 +990,13 @@ class nnUNetTrainer(object):
 
         # log plans and dataset (fingerprint) json files to MLflow
         if self.use_mlflow:
-            self.logger.log_artifact(join(self.output_folder_base, 'plans.json'), artifact_path="")
-            self.logger.log_artifact(join(self.output_folder_base, 'dataset.json'), artifact_path="")
-            self.logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path="")
+            self.mlflow_logger.log_artifact(join(self.output_folder_base, 'plans.json'), artifact_path="")
+            self.mlflow_logger.log_artifact(join(self.output_folder_base, 'dataset.json'), artifact_path="")
+            self.mlflow_logger.log_artifact(join(self.output_folder_base, 'dataset_fingerprint.json'), artifact_path="")
 
             splits_file =  self.get_splits_file()
             if isfile(splits_file):
-                self.logger.log_artifact(splits_file, artifact_path="")
+                self.mlflow_logger.log_artifact(splits_file, artifact_path="")
 
         # produces a pdf in output folder
         self.plot_network_architecture()
@@ -1015,7 +1017,7 @@ class nnUNetTrainer(object):
 
         # lof model for final checkpoint to MLflow
         if self.use_mlflow and isfile(final_checkpoint_file):
-            self.logger.log_model(
+            self.mlflow_logger.log_model(
                     "%s-final-model" % self.get_fold_name(), 
                     final_checkpoint_file, 
                     plans_file, 
@@ -1031,7 +1033,7 @@ class nnUNetTrainer(object):
         # log model for best checkpoint to MLflow
         best_checkpoint_file = join(self.output_folder, 'checkpoint_best.pth')
         if self.use_mlflow and isfile(best_checkpoint_file) and self.best_checkpoint_epoch != self.current_epoch:
-            self.logger.log_model(
+            self.mlflow_logger.log_model(
                     "%s-best-model" % self.get_fold_name(), 
                     best_checkpoint_file, 
                     plans_file, 
@@ -1064,7 +1066,7 @@ class nnUNetTrainer(object):
         empty_cache(self.device)
         self.print_to_log_file("Training done.")
         if self.use_mlflow and isfile(self.log_file):
-            self.logger.log_artifact(self.log_file, artifact_path="")
+            self.mlflow_logger.log_artifact(self.log_file, artifact_path="")
 
 
     def on_train_epoch_start(self):
@@ -1277,7 +1279,7 @@ class nnUNetTrainer(object):
                 }
                 torch.save(checkpoint, filename)
                 if self.use_mlflow and save_remote:
-                    self.logger.log_artifact(filename, self.get_fold_name())
+                    self.mlflow_logger.log_artifact(filename, self.get_fold_name())
             else:
                 self.print_to_log_file('No checkpoint written, checkpointing is disabled')
 
@@ -1482,7 +1484,7 @@ class nnUNetTrainer(object):
     def run_training(self):
         if self.use_mlflow:
             with mlflow.start_run():
-                self.logger.log_params(self.get_hyperparams())
+                self.mlflow_logger.log_params(self.get_hyperparams())
                 self.run_training_core()
         else:
             self.run_training_core()
