@@ -12,9 +12,6 @@ class MLflowLogger:
     Implements the logger interface: update_config(), log(), log_summary().
     """
 
-    def __init__(self):
-        self.check_mlflow_run()
-
     def update_config(self, config: dict):
         """Called by MetaLogger with plans, configuration, fold, dataset, hparas."""
         self.check_mlflow_run()
