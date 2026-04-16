@@ -36,8 +36,14 @@ class MLflowLogger:
             mlflow.log_metric(key, float(value), step=step)
         except Exception as e:
             print(f"MLflowLogger: Failed to log metric {key} with value {value} at step {step}: {e}")
-
-    # --- Your custom methods (called from your trainer, not from MetaLogger) ---
+            
+    def log_summary(self, key, value):
+        """Called by MetaLogger at the end of training. Value is a scalar or string."""
+        self.check_mlflow_run()
+        try:
+            mlflow.log_metric(key, float(value))
+        except Exception as e:
+            print(f"MLflowLogger: Failed to log metric {key} with value {value}: {e}")
 
     def log_artifact(self, filename, artifact_path):
         self.check_mlflow_run()
